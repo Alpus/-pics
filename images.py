@@ -39,7 +39,7 @@ def get_pic():
             'link': get_image_link(image)}
 
 def get_rand_name_except_author(author):
-    short_name = None
+    short_name = "Pushin Alexander"
     for name in short_names:
         if name in author:
             short_name = name

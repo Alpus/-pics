@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 
+try:
+    import sys
+    reload(sys)
+    sys.setdefaultencoding("utf-8")
+except:
+    pass
+
 import json
 import pickle
 import os.path

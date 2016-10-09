@@ -44,7 +44,7 @@
 	{% for n, name, question_id in authors %}
 		<div class="row">
 		    <div class="col-md-12" style="min-width:600px">
-	  			<button id="answer{{ n }}" style="width:500px" value="{{ name }};{{ question_id }}" class="btn btn-large btn-default center-block">{{ name }}</button>
+	  			<button id="answer{{ n }}" style="width:500px" value="{{ name }};{{ question_id }}" class="btn btn-lg btn-default center-block">{{ name }}</button>
 		    </div>
 		</div>
 	{% end %}
@@ -85,7 +85,6 @@
             // initialize the viewer
             $('#answer0, #answer1, #answer2').click(function (event) {
                 var value = $(event.target).val();
-                console.log(value)
                 $.ajax(
                         {
                             url: '/answer',
@@ -93,22 +92,42 @@
                             data: 'value=' + encodeURIComponent(value),
                             success: function (jsonResponse) {
                             	var objresponse = JSON.parse(jsonResponse);
-                            	if (objresponse['verdict'] == 'OK') {
-	                                $("#pic_link").attr('src', objresponse['link']);
-	                                $("#pic_name").text(objresponse['pic_name']);
-	                                $("#score").text('Счет: ' + objresponse['count']);
-	                                for (i = 0; i < 3; i++) {
-	                                	number = objresponse['authors'][i][0]
-	                                	name = objresponse['authors'][i][1]
-	                                	question_id = objresponse['authors'][i][2]
-	                                	answer_name = "#answer" + number
-	                                	key = name + ';' + question_id
-									    $(answer_name).text(name);
-									    $(answer_name).attr('value', key);
-									}
-								} else {
-									location.reload();
+                            	for (let number = 0; number < 3; number++) {
+                                	answer_obj = $("#answer" + number)
+                                	answer_obj.removeClass("btn-default")
+                                	console.log(answer_obj.text())
+                                	console.log(objresponse['answer'])
+                                	if (answer_obj.text() === objresponse['answer']) {
+                                		answer_obj.addClass("btn-success")
+                                	} else {
+                                		answer_obj.addClass("btn-danger")
+                                	}
 								}
+                            	setTimeout(function () {
+							        if (objresponse['verdict'] === 'OK') {
+		                                $("#pic_link").attr('src', objresponse['link']);
+		                                $("#pic_name").text(objresponse['pic_name']);
+		                                $("#score").text('Счет: ' + objresponse['count']);
+		                                for (i = 0; i < 3; i++) {
+		                                	number = objresponse['authors'][i][0];
+		                                	name = objresponse['authors'][i][1];
+		                                	question_id = objresponse['authors'][i][2];
+		                                	answer_name = "#answer" + number;
+		                                	key = name + ';' + question_id;
+										    $(answer_name).text(name);
+										    $(answer_name).attr('value', key);
+										}
+
+										for (let number = 0; number < 3; number++) {
+		                                	answer_obj = $("#answer" + number);
+		                                	answer_obj.removeClass("btn-success");
+		                                	answer_obj.removeClass("btn-danger");
+		                                	answer_obj.addClass("btn-default");
+	                                	}
+									} else {
+										location.reload();
+									}
+							    }, 1200);
                             },
                             error: function () {
                                 location.reload();

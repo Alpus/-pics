@@ -75,12 +75,13 @@ class CheckAnswer(tornado.web.RequestHandler):
                 self.write(json.dumps({
                         "verdict": "OK", "link": image['link'],"pic_name": image['title'],
                         "authors": pic_list,
-                        'count': questions[question_id]['count']
+                        'count': questions[question_id]['count'],
+                        'answer': questions[question_id]['name']
                     })
                 )
             else:
                 change_top(self.get_secure_cookie("login"), int(questions[question_id]['count']))
-                self.write(json.dumps({"verdict": "ERR", 'count': questions[question_id]['count']}))
+                self.write(json.dumps({"verdict": "ERR", 'count': questions[question_id]['count'], 'answer': questions[question_id]['name']}))
                 del questions[question_id]
 
 

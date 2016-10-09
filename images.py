@@ -46,10 +46,15 @@ def find_short_name(author):
             return name
     
 def find_long_name(short_name):
-    return random.choice(filter(lambda x: short_name.lower() in x.lower(), get_authors()))
+    images_list = list(filter(lambda x: short_name.lower() in x.lower(), get_authors()))
+    if images_list:
+        return random.choice(images_list)
+    return short_name
 
 def get_rand_names_except_author(author):
     short_name = find_short_name(author)
+    if not short_name:
+        return "Ван Гог", "Босхе"
     name_1 = random.choice(short_names)
     while name_1 == short_name:
         name_1 = random.choice(short_names)

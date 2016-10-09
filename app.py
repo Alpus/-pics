@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import tornado.ioloop
 import tornado.web
 import jinja2
@@ -109,5 +111,5 @@ routes = [
 
 
 app = tornado.web.Application(routes)
-app.listen(8000)
+app.listen(80)
 tornado.ioloop.IOLoop.current().start()

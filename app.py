@@ -62,7 +62,7 @@ def make_new_question(old_count):
 
 class CheckAnswer(tornado.web.RequestHandler):
     def post(self):
-        if not self.get_cookie("login"):
+        if not self.get_secure_cookie("login"):
             self.render("pages/login.html")
         else:
             name, question_id = self.get_argument("value").split(';')
@@ -79,7 +79,7 @@ class CheckAnswer(tornado.web.RequestHandler):
                     })
                 )
             else:
-                change_top(self.get_cookie("login"), int(questions[question_id]['count']))
+                change_top(self.get_secure_cookie("login"), int(questions[question_id]['count']))
                 self.write(json.dumps({"verdict": "ERR", 'count': questions[question_id]['count']}))
                 del questions[question_id]
 
@@ -87,11 +87,11 @@ class CheckAnswer(tornado.web.RequestHandler):
 class MainPage(tornado.web.RequestHandler):
     def get(self):
         login = self.get_argument('login', None)
-        if not self.get_cookie("login"):
+        if not self.get_secure_cookie("login"):
             if not login:
                 self.render("pages/login.html")
             else:
-                self.set_cookie('login', login)
+                self.set_secure_cookie('login', login)
                 self.redirect('/')
         else:
             question_id, image, authors = make_new_question(0)
@@ -110,6 +110,6 @@ routes = [
 ]
 
 
-app = tornado.web.Application(routes)
+app = tornado.web.Application(routes, cookie_secret="42")
 app.listen(80)
 tornado.ioloop.IOLoop.current().start()

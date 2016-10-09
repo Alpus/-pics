@@ -5,7 +5,7 @@ import tornado.web
 import jinja2
 import uuid
 
-from images import get_rand_name_except_author, get_pic
+from images import get_rand_names_except_author, get_pic
 from random import shuffle
 
 import json
@@ -47,10 +47,11 @@ def make_new_question(old_count):
     question_id = str(uuid.uuid4())
     image = get_pic()
     print(image)
+    first, second = get_rand_names_except_author(image['author']);
     authors = [
         (image['author'], question_id),
-        (get_rand_name_except_author(image['author']), question_id),
-        (get_rand_name_except_author(image['author']), question_id)
+        (first, question_id),
+        (second, question_id)
     ]
     shuffle(authors)
     for num, (author, question_id) in enumerate(authors):
@@ -76,7 +77,7 @@ class CheckAnswer(tornado.web.RequestHandler):
                         "verdict": "OK", "link": image['link'],"pic_name": image['title'],
                         "authors": pic_list,
                         'count': questions[question_id]['count'],
-                        'answer': questions[question_id]['name']
+                        'answer': name
                     })
                 )
             else:

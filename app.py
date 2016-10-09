@@ -1,52 +1,115 @@
+# -*- coding: utf-8 -*-
+
 import tornado.ioloop
 import tornado.web
 import jinja2
 import uuid
 
-import images
+from images import get_rand_name_except_author, get_pic
 from random import shuffle
 
 import json
+import pickle
+
 
 questions = dict()
 
-def make_new_pic_list():
-	question_id = str(uuid.uuid4())
-	image = images.get_pic()
-	authors = [(image['author'], question_id)]
-	map(authors.append, [(get_rand_name_except(image['author']), question_id), (get_rand_name_except(image['author']), question_id)])
+top_file = "static/top.dat"
+def read_top():
+    try:
+        return pickle.load(open(top_file, 'rb'))
+    except:
+        pickle.dump([('Енот уже не тот', 0)], open(top_file, 'wb'))
+        return pickle.load(open(top_file, 'rb'))
 
-	for num, (author, question_id) in enumerate(shuffle(authors)):
-		authors[num] = (num, author, question_id)
 
-	return question_id, image, authors
+def change_top(needed_login, needed_score):
+    top = read_top()
+    flag = False
+
+    for n in range(len(top)):
+        login, score = top[n]
+        if needed_login == login:
+            flag = True
+            if score < needed_score:
+                top[n] = login, needed_score
+            else:
+                break
+
+    if not flag:
+        top.append((needed_login, needed_score))
+
+    top = sorted(top, key=lambda x: -x[1])
+    pickle.dump(top, open(top_file, 'wb'))
+
+
+def make_new_question(old_count):
+    question_id = str(uuid.uuid4())
+    image = get_pic()
+    print(image)
+    authors = [
+        (image['author'], question_id),
+        (get_rand_name_except_author(image['author']), question_id),
+        (get_rand_name_except_author(image['author']), question_id)
+    ]
+    shuffle(authors)
+    for num, (author, question_id) in enumerate(authors):
+        authors[num] = (num, author, question_id)
+
+    questions[question_id] = {'name': image['author'], 'count': old_count}
+    return question_id, image, authors
+
 
 class CheckAnswer(tornado.web.RequestHandler):
     def post(self):
-        name, question_id = self.get_argument("value").split(';')
-        if questions[question_id]['name'] == name:
-        	questions[question_id]['count'] += 1
-        	question_id, image, pic_list = make_new_pic_list()
-        	self.write(json.dumps(
-        		{"verdict": "OK", "link": image['link'], "pic_name": image['title'], "value": ';'.join(image['author'], question_id), "authors": pic_list})
-        	)
+        if not self.get_secure_cookie("login"):
+            self.render("pages/login.html")
         else:
-        	self.write(json.dumps({"verdict": "ERR", 'count': questions[question_id]['count']}))
-        	del questions[question_id]
+            name, question_id = self.get_argument("value").split(';')
+            print('real', questions[question_id]['name'])
+            print('get', name)
+
+            if questions[question_id]['name'] == name:
+                questions[question_id]['count'] += 1
+                question_id, image, pic_list = make_new_question(questions[question_id]['count'])
+                self.write(json.dumps({
+                        "verdict": "OK", "link": image['link'],"pic_name": image['title'],
+                        "authors": pic_list,
+                        'count': questions[question_id]['count']
+                    })
+                )
+            else:
+                change_top(self.get_secure_cookie("login"), int(questions[question_id]['count']))
+                self.write(json.dumps({"verdict": "ERR", 'count': questions[question_id]['count']}))
+                del questions[question_id]
 
 
 class MainPage(tornado.web.RequestHandler):
     def get(self):
-        self.render('pages/main.html', pic_name='У ванькова мелкий писюничк', authors=[(0, 'Репин', 123), (1, 'Хуепин', 123), (2, 'Пидор', 123)])
-
+        login = self.get_argument('login', None)
+        if not self.get_secure_cookie("login"):
+            if not login:
+                self.render("pages/login.html")
+            else:
+                self.set_secure_cookie('login', login)
+                self.redirect('/')
+        else:
+            question_id, image, authors = make_new_question(0)
+            self.render(
+                'pages/main.html',
+                link=image['link'],
+                pic_name=image['title'],
+                authors=authors,
+                top=read_top()
+            )
 
 
 routes = [
-	(r'/', MainPage),
-	(r'/answer', CheckAnswer)
+    (r'/', MainPage),
+    (r'/answer', CheckAnswer),
 ]
 
 
-app = tornado.web.Application(routes)
-app.listen(8000)
+app = tornado.web.Application(routes, cookie_secret="42")
+app.listen(80)
 tornado.ioloop.IOLoop.current().start()

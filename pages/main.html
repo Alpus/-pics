@@ -6,29 +6,36 @@
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 
 	<!-- Latest compiled and minified JavaScript -->
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 </head>
 
 <body background="http://www.webdesigndev.com/wp-content/uploads/2013/06/Triangle.jpg">
 
 	<!-- Название -->
 
-	<div class="row" style="height:5em;">
+	<div class="row" style="height:2em;">
 	</div>
 
 	<div class="row">
-	    <div class="col-md-12" style="min-width:400px">
-  			<h2 id="pic_name" class="text-center">{{ pic_name }}</h2>
+	    <div class="col-md-12" style="min-width:600px">
+  			<h3 id="pic_name" class="text-center">{{ pic_name }}</h3>
   		</div>
 	</div>
 
 	<!-- Картина -->
 
 	<div class="row">
-	    <div class="col-md-12" style="min-width:400px">
-  			<img id="pic_link" style="width:300px" class="img-thumbnail center-block" src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Walentin_Alexandrowitsch_Serow_Girl_with_Peaches.jpg/380px-Walentin_Alexandrowitsch_Serow_Girl_with_Peaches.jpg" alt=" Картина {{ pic_name }} "/>
+	    <div class="col-md-12" style="min-width:600px">
+  			<img id="pic_link" style="width:500px" class="img-thumbnail center-block" src="{{ link }}" alt=" Картина {{ pic_name }} "/>
 	    </div>
+	</div>
+
+	<!-- Счет -->
+	<div class="row">
+	    <div class="col-md-12" style="min-width:600px">
+  			<h4 id="score" class="text-center">Счет: 0</h4>
+  		</div>
 	</div>
 
 
@@ -36,31 +43,68 @@
 
 	{% for n, name, question_id in authors %}
 		<div class="row">
-		    <div class="col-md-12" style="min-width:400px">
-	  			<button id="answer{{ n }}" style="width:300px" value="{{ name }};{{ question_id }}" class="btn btn-large btn-default center-block">{{ name }}</button>
+		    <div class="col-md-12" style="min-width:600px">
+	  			<button id="answer{{ n }}" style="width:500px" value="{{ name }};{{ question_id }}" class="btn btn-large btn-default center-block">{{ name }}</button>
 		    </div>
 		</div>
 	{% end %}
+
+
+	<!-- Топ -->
+
+	<div class="row" style="height:5em;">
+	</div>
+
+	<div class="col-md-12" style="min-width:600px">
+		<h2 id="pic_name" class="text-center">ТОП</h2>
+	</div>
+
+	<div class="row">
+	    <div class="col-md-12" style="min-width:600px">
+  			<table class="table table-striped" style="width:500px; margin: 0 auto">
+  				<thead class=>
+	  				<tr>
+					  <td>Имя</td>
+					  <td>Рекорд</td>
+					</tr>
+  				</thead>
+  				<tbody>
+  				{% for name, count in top %}
+	  				<tr>
+					  <td>{{ name }}</td>
+					  <td>{{ count }}</td>
+					</tr>
+				{% end %}
+				</tbody>
+			</table>
+	    </div>
+	</div>
 
 	<script>
         $(document).ready(function () {
             // initialize the viewer
             $('#answer0, #answer1, #answer2').click(function (event) {
                 var value = $(event.target).val();
+                console.log(value)
                 $.ajax(
                         {
                             url: '/answer',
                             type: 'POST',
-                            data: value,
+                            data: 'value=' + encodeURIComponent(value),
                             success: function (jsonResponse) {
+                            	var objresponse = JSON.parse(jsonResponse);
                             	if (objresponse['verdict'] == 'OK') {
-	                                var objresponse = JSON.parse(jsonResponse);
 	                                $("#pic_link").attr('src', objresponse['link']);
 	                                $("#pic_name").text(objresponse['pic_name']);
-	                                for (i = 0; i < cars.length; i++) {
-	                                	answer_name = "#answer" + str(i)
-									    $(answer_name).text(objresponse['authors'][i]);
-									    $(answer_name).attr(value, objresponse['value'][i]);
+	                                $("#score").text('Счет: ' + objresponse['count']);
+	                                for (i = 0; i < 3; i++) {
+	                                	number = objresponse['authors'][i][0]
+	                                	name = objresponse['authors'][i][1]
+	                                	question_id = objresponse['authors'][i][2]
+	                                	answer_name = "#answer" + number
+	                                	key = name + ';' + question_id
+									    $(answer_name).text(name);
+									    $(answer_name).attr('value', key);
 									}
 								} else {
 									location.reload();
